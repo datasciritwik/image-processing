@@ -51,7 +51,7 @@ if option == 'GREEN':
         col2.image(result, caption=f"{option} Screen Antialiased Image", use_column_width=True)
 
         if st.toggle('SHOW CODE'):
-            code = f"def rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
+            code = f"import cv2\nimport numpy as np\nimport skimage.exposure\ndef rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
             st.code(code, language='python')
     
 elif option == 'BLUE':
@@ -96,7 +96,7 @@ elif option == 'BLUE':
         col2.image(result, caption=f"{option} Screen Antialiased Image", use_column_width=True)
 
         if st.toggle('SHOW CODE'):   
-            ccode = f"def rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
+            ccode = f"import cv2\nimport numpy as np\nimport skimage.exposure\ndef rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
             st.code(code, language='python')
     
 elif option == 'OTHERS':
