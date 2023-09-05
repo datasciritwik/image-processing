@@ -13,7 +13,7 @@ if option == 'GREEN':
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
     if uploaded_file is not None:
         x=1
-        image = cv2.imread(uploaded_file.name)
+        image = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1)
         col1, col2 = st.columns(2)
         col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
         lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)
@@ -58,7 +58,7 @@ elif option == 'BLUE':
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
     if uploaded_file is not None:
         x=2
-        image = cv2.imread(uploaded_file.name)
+        image = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1)
         col1, col2 = st.columns(2)
         col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
         lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)
