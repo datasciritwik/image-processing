@@ -6,95 +6,153 @@ import skimage.exposure
 st.set_page_config(layout='wide')
 
 # Streamlit UI
-st.title("Green Color Range Adjustment")
+st.title("Remove Image Background")
 
-# Upload image
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
-
-option = st.sidebar.radio('Select the Method', ['Method-I', 'Method-II'])
-
-if option == 'Method-I' and uploaded_file is not None:
-# if uploaded_file is not None:
-    # Read and display the uploaded image
-    col1, col2 = st.columns(2)
-    image = cv2.imread(uploaded_file.name)
-    col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
-
-    # Sliders to adjust green color range
-    lower_hue = st.sidebar.slider("Lower Hue", 0, 180, 35)
-    upper_hue = st.sidebar.slider("Upper Hue", 0, 180, 85)
-    lower_saturation = st.sidebar.slider("Lower Saturation", 0, 255, 50)
-    upper_saturation = st.sidebar.slider("Upper Saturation", 0, 255, 255)
-    lower_value = st.sidebar.slider("Lower Value", 0, 255, 50)
-    upper_value = st.sidebar.slider("Upper Value", 0, 255, 255)
-
-    # Convert image to HSV color space
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    # Create mask based on green color range
-    lower_green = np.array([lower_hue, lower_saturation, lower_value])
-    upper_green = np.array([upper_hue, upper_saturation, upper_value])
-    green_mask = cv2.inRange(hsv_image, lower_green, upper_green)
-
-    # Invert the green mask to get the non-green region
-    non_green_mask = cv2.bitwise_not(green_mask)
-
-    # Create an empty image with a white background
-    white_background = np.full_like(image, (255, 255, 255))
-
-    # Apply the mask to the original image
-    result_image = cv2.bitwise_and(white_background, white_background, mask=green_mask)
-    result_image += cv2.bitwise_and(image, image, mask=non_green_mask)
-
-    # Display the adjusted image
-    col2.image(result_image, channels="BGR", caption="Adjusted Image", use_column_width=True)
-
-if option == 'Method-II' and uploaded_file is not None:
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-
-    image = cv2.imread(uploaded_file.name)
-    col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
-
-    # convert to LAB
-    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)
-
-    # extract A channel
-    A = lab[:,:,1]
-
-    thrs = st.sidebar.slider("THRESH", 0, 500, 0)
-    maxv = st.sidebar.slider("MAXVAL", 0, 500, 255)
-    # threshold A channel
-    thresh = cv2.threshold(A, thrs, maxv, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1] ## threshold(src, thresh, maxval, type[, dst]) -> retval, dst
-
-    csx, csy = st.columns(2)
-    # blur threshold image
-    SIGMAX = st.sidebar.number_input("SigmaX", 0, 500, 5)
-    SIGMAY = st.sidebar.number_input("SigmaY", 0, 500, 5)
-    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX=SIGMAX, sigmaY=SIGMAY, borderType = cv2.BORDER_DEFAULT)
+option = st.sidebar.selectbox('SELECT BACKGROUND COLOR', ['GREEN', 'BLUE', 'OTHERS'])
+if option == 'GREEN':
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+    if uploaded_file is not None:
+        x=1
+        image = cv2.imread(uploaded_file.name)
+        col1, col2 = st.columns(2)
+        col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
+        lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)
+        channel = lab[:,:,x]
+        thcol, maxcol = st.sidebar.columns(2)
+        with thcol:
+            thrs = st.slider("THRESH", 0, 500, 0)
+        with maxcol:
+            maxv = st.slider("MAXVAL", 0, 500, 255)
+        thresh = cv2.threshold(channel, thrs, maxv, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
     
-    # stretch so that 255 -> 255 and 127.5 -> 0
-    inraga = st.sidebar.number_input("In Range-A",0.0,  255.0, 127.5) 
-    inragb = st.sidebar.number_input("In Range-B", 0, 255, 255)
-    outrnga = st.sidebar.number_input("Out Range-A", 0.0,  255.0, 0.0)
-    outrngb = st.sidebar.number_input("Out Range-B", 0, 255, 255)
-    mask = skimage.exposure.rescale_intensity(blur, in_range=(inraga,inragb), out_range=(outrnga,outrngb)).astype(np.uint8)
+        csx, csy = st.sidebar.columns(2)
+        with csx:
+            SIGMAX = st.slider("SigmaX", 0, 500, 5)
+        with csy:
+            SIGMAY = st.slider("SigmaY", 0, 500, 5)
+        blur = cv2.GaussianBlur(thresh, (0,0), sigmaX=SIGMAX, sigmaY=SIGMAY, borderType = cv2.BORDER_DEFAULT)
+        
+        ina, inb = st.sidebar.columns(2)
+        outa, outb = st.sidebar.columns(2)
+        with ina:
+            inraga = st.slider("In Range-A",0.0,  255.0, 127.5) 
+        with inb:
+            inragb = st.slider("In Range-B", 0, 255, 255)
+        with outa:
+            outrnga = st.slider("Out Range-A", 0.0,  255.0, 0.0)
+        with outb:
+            outrngb = st.slider("Out Range-B", 0, 255, 255)
+        mask = skimage.exposure.rescale_intensity(blur, in_range=(inraga,inragb), out_range=(outrnga,outrngb)).astype(np.uint8)
+        
+        result = image.copy()
+        result = cv2.cvtColor(image,cv2.COLOR_BGR2RGBA)
+        result[:,:,3] = mask
     
-    # add mask to image as alpha channel
-    result = image.copy()
-    result = cv2.cvtColor(image,cv2.COLOR_BGR2RGBA)
-    result[:,:,3] = mask
+        col2.image(result, caption=f"{option} Screen Antialiased Image", use_column_width=True)
 
-    # # save output
-    # cv2.imwrite('greenscreen_thresh.png', thresh)
-    # cv2.imwrite('greenscreen_mask.png', mask)
-    # cv2.imwrite('greenscreen_antialiased.png', result)
+        if st.toggle('SHOW CODE'):
+            code = f"def rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
+            st.code(code, language='python')
+    
+elif option == 'BLUE':
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+    if uploaded_file is not None:
+        x=2
+        image = cv2.imread(uploaded_file.name)
+        col1, col2 = st.columns(2)
+        col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
+        lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)
+        thcol, maxcol = st.sidebar.columns(2)
+        channel = lab[:,:,x]
+        with thcol:
+            thrs = st.slider("THRESH", 0, 500, 0)
+        with maxcol:
+            maxv = st.slider("MAXVAL", 0, 500, 255)
+        thresh = cv2.threshold(channel, thrs, maxv, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 
-    # Display the adjusted image
-    col2.image(result, caption="Green Screen Antialiased Image", use_column_width=True)
+        csx, csy = st.sidebar.columns(2)
+        with csx:
+            SIGMAX = st.slider("SigmaX", 0, 500, 5)
+        with csy:
+            SIGMAY = st.slider("SigmaY", 0, 500, 5)
+        blur = cv2.GaussianBlur(thresh, (0,0), sigmaX=SIGMAX, sigmaY=SIGMAY, borderType = cv2.BORDER_DEFAULT)
+        
+        ina, inb = st.sidebar.columns(2)
+        outa, outb = st.sidebar.columns(2)
+        with ina:
+            inraga = st.slider("In Range-A",0.0,  255.0, 127.5) 
+        with inb:
+            inragb = st.slider("In Range-B", 0, 255, 255)
+        with outa:
+            outrnga = st.slider("Out Range-A", 0.0,  255.0, 0.0)
+        with outb:
+            outrngb = st.slider("Out Range-B", 0, 255, 255)
+        mask = skimage.exposure.rescale_intensity(blur, in_range=(inraga,inragb), out_range=(outrnga,outrngb)).astype(np.uint8)
+        
+        result = image.copy()
+        result = cv2.cvtColor(image,cv2.COLOR_BGR2RGBA)
+        result[:,:,3] = mask
+    
+        col2.image(result, caption=f"{option} Screen Antialiased Image", use_column_width=True)
 
-    # Display the adjusted image
-    # col3.image(mask,caption="Green Screen Mask Image", use_column_width=True)
+        if st.toggle('SHOW CODE'):   
+            ccode = f"def rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
+            st.code(code, language='python')
+    
+elif option == 'OTHERS':
+    st.write("Coming Soon...")
+    # uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+    # if uploaded_file is not None:
+    #     image = cv2.imread(uploaded_file.name)
+    #     col1, col2 = st.columns(2)
+    #     col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
+        
+    #     lb, lg, lr = st.sidebar.columns(3)
+    #     with lb:
+    #         lvb = st.slider('Lower Blue', 0, 500, 200)
+    #     with lg:
+    #         lvg = st.slider('Lower Green', 0, 500, 200)
+    #     with lr:
+    #         lvr = st.slider('Lower Red', 0, 500, 200)
+    #     lower_color = np.array([lvb, lvg, lvr])
+        
+    #     ub, ug, ur = st.sidebar.columns(3)
+    #     with ub:
+    #         uvb = st.slider('Lower Blue', 0, 500, 255)
+    #     with ug:
+    #         uvg = st.slider('Lower Green', 0, 500, 255)
+    #     with ur:
+    #         uvr = st.slider('Lower Red', 0, 500, 255)
+    #     upper_color = np.array([uvb, uvg, uvr])
+        
+    #     mask = cv2.inRange(image, lower_color, upper_color)
 
-    # Display the adjusted image
-    # col4.image(thresh, caption="Green Screen Thresh Image", use_column_width=True)
+    #     csx, csy = st.sidebar.columns(2)
+    #     with csx:
+    #         SIGMAX = st.slider("SigmaX", 0, 500, 5)
+    #     with csy:
+    #         SIGMAY = st.slider("SigmaY", 0, 500, 5)
+    #     blur = cv2.GaussianBlur(mask, (0,0), sigmaX=SIGMAX, sigmaY=SIGMAY, borderType = cv2.BORDER_DEFAULT)
+
+    #     # ina, inb = st.sidebar.columns(2)
+    #     # outa, outb = st.sidebar.columns(2)
+    #     # with ina:
+    #     #     inraga = st.slider("In Range-A",0.0,  255.0, 127.5) 
+    #     # with inb:
+    #     #     inragb = st.slider("In Range-B", 0, 255, 255)
+    #     # with outa:
+    #     #     outrnga = st.slider("Out Range-A", 0.0,  255.0, 0.0)
+    #     # with outb:
+    #     #     outrngb = st.slider("Out Range-B", 0, 255, 255)
+    #     # mask = skimage.exposure.rescale_intensity(blur, in_range=(inraga,inragb), out_range=(outrnga,outrngb)).astype(np.uint8)
+    #     mask = 255 - blur
+    #     result = image.copy()
+    #     result = cv2.cvtColor(image,cv2.COLOR_BGR2RGBA)
+    #     result[:,:,3] = mask
+    
+    #     col2.image(result, caption=f"{option} Screen Antialiased Image", use_column_width=True)
+
+
+    #     # if st.toggle('SHOW CODE'):
+    #     #     code = f"def rembgfun(InImage, OutImage):\n'''\nInImage = image.jpg\nOutImage = image.png\n'''\nimage = cv2.imread(InImage)\nlab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\nchannel = lab[:,:,{x}]\nthresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\nblur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\nmask = skimage.exposure.rescale_intensity(blur, in_range=({inraga,inragb}), out_range=({outrnga,outrngb})).astype(np.uint8)\nresult = img.copy()\nresult = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\nresult[:,:,3] = mask\ncv2.imwrite(OutImage, result)"
+    #     #     st.code(code, language='python')
