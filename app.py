@@ -8,7 +8,7 @@ st.set_page_config(layout='wide')
 # Streamlit UI
 st.title("Remove Image Background")
 
-option = st.sidebar.selectbox('SELECT BACKGROUND COLOR', ['GREEN', 'BLUE', 'OTHERS'])
+option = st.sidebar.selectbox('SELECT BACKGROUND COLOR', ['GREEN', 'BLUE', 'OTHERS', 'CROP'])
 if option == 'GREEN':
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
     if uploaded_file is not None:
@@ -98,7 +98,31 @@ elif option == 'BLUE':
         if st.toggle('SHOW CODE'):   
             ccode = f"import cv2\nimport numpy as np\nimport skimage.exposure\ndef rembgfun(InImage, OutImage):\n    '''\n    InImage = image.jpg\n    OutImage = image.png\n    '''\n    image = cv2.imread(InImage)\n    lab = cv2.cvtColor(image,cv2.COLOR_BGR2LAB)\n    channel = lab[:,:,{x}]\n    thresh = cv2.threshold(channel, {thrs}, {maxv}, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]\n    blur = cv2.GaussianBlur(thresh, (0,0), sigmaX={SIGMAX}, sigmaY={SIGMAY}, borderType = cv2.BORDER_DEFAULT)\n    mask = skimage.exposure.rescale_intensity(blur, in_range={inraga,inragb}, out_range={outrnga,outrngb}).astype(np.uint8)\n    result = img.copy()\n    result = cv2.cvtColor(img,cv2.COLOR_BGR2BGRA)\n    result[:,:,3] = mask\n    cv2.imwrite(OutImage, result)"
             st.code(code, language='python')
-    
+
+
+elif option == 'CROP':
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
+    if uploaded_file is not None:
+        image = cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1)
+        col1, col2 = st.columns(2)
+        col1.image(image, channels="BGR", caption="Uploaded Image", use_column_width=True)
+        x, y = st.sidebar.columns(2)
+        with x:
+            X = st.slider('X-Coordinate', 0, 100, 1000)
+        with y:
+            Y = st.slider('Y-Coordinate', 0, 300, 1000)
+            
+        w, h = st.sidebar.columns(2)
+        with w:
+            width = st.slider('Width', 0, 300, 1000)
+        with h:
+            height = st.slider('Height', 0, 100, 1000)
+
+        result = image[Y:Y+height, X:X+width]
+
+        col2.image(result, caption="Croped Image", use_column_width=True)
+
+
 elif option == 'OTHERS':
     st.write("Coming Soon...")
     # uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
