@@ -8,7 +8,7 @@ st.set_page_config(layout='wide')
 # Streamlit UI
 st.title("Remove Image Background")
 
-option = st.sidebar.selectbox('SELECT BACKGROUND COLOR', ['GREEN', 'BLUE', 'OTHERS', 'CROP'])
+option = st.sidebar.selectbox('SELECT BACKGROUND COLOR', ['GREEN', 'BLUE', 'BLACK', 'OTHERS', 'CROP'])
 if option == 'GREEN':
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png"])
     if uploaded_file is not None:
